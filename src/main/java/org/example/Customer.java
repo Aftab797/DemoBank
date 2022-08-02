@@ -8,13 +8,17 @@ public class Customer {
     private String email;
 
 
-    public Customer(String name, String phoneNo, String email, String customerId) {
+    public Customer(String name, String phoneNo, String email) {
 
         this.name = name;
         this.phoneNo = phoneNo;
         this.email = email;
-        this.customerId = customerId;
+        this.customerId = MapperClass.getInstance().generateUniqueCustomerID();
 
+        Customers.getInstance().addCustomer(customerId, this);
+        MapperClass.getInstance().addAccountToCustomerId(customerId, null);
+
+        System.out.printf("\n******** Customer created with Id %s ********\n\n",customerId);
     }
 
     public String getCustomerId() {

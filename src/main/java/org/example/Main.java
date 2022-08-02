@@ -4,41 +4,15 @@ import java.util.*;
 
 public class Main {
 
-    static Map<Customer, HashSet<Account>> customerListHashMap;
-    static Map<Account, HashSet<Customer>> accountListHashMap;
     static double savingsInterest = 0.03f;
     static double lessThan1interest = 0.05f;
     static double lessThan5interest = 0.06f;
     static double greaterThan5interest = 0.065f;
-    static ServiceClass serviceClass;
 
     public static void main(String[] args) {
 
-        customerListHashMap = new HashMap<>();
-        accountListHashMap = new HashMap<>();
-        serviceClass = new ServiceClass();
+
         Scanner sc = new Scanner(System.in);
-
-//        Customer aftab = createCustomer("Aftaab Shaikh", "9167689584", "aftabshaikh2014@gmail.com");
-//
-//        Account a1 = createAccount("Savings", 100.00, 0.03, aftab);
-//
-//        Account a2 = createAccount("Term Deposit", 00.00, 0.03, aftab);
-//
-//        Customer shubha = createCustomer("Shubha", "9167689584", "014@gmail.com");
-
-//        linkAccountToUser("123456","8907" );
-
-
-//        for (Customer c : customerListHashMap.keySet()){
-//            System.out.println(c.getCustomerDetails());
-//            System.out.println(customerListHashMap.get(c)+"\n");
-//        }
-
-//        for (Account c : accountListHashMap.keySet()){
-//            System.out.println(c.getAccountNo());
-//            System.out.println(accountListHashMap.get(c)+"\n");
-//        }
 
         do{
 
@@ -140,21 +114,20 @@ public class Main {
         email = sc.nextLine();
 
 
-        String customerId =  generateUniqueCustomerID(customerListHashMap.keySet());
-        Customer c1 = new Customer(name, phoneNum, email, customerId);
-        customerListHashMap.putIfAbsent(c1, new HashSet<>());
 
-        System.out.printf("\n************ CUSTOMER CREATED with name: %s ID %s ************\n\n", name, customerId );
+        Customer c1 = new Customer(name, phoneNum, email);
+
 
         return c1;
     }
+
 
     private static Account createAccount(Scanner sc) {
         String choice;
         String accountType =null;
         double balance;
         double interest = savingsInterest;
-        Customer customer;
+        String customerId;
         int term= 0;
 
         do {
@@ -197,46 +170,29 @@ public class Main {
 
         do{
             System.out.print("Enter customer id, who will be the owner of this account: ");
-            customer = getCustomerObject(sc.nextLine());
+            customerId = sc.nextLine();
 
-            if (customer == null){
+            if (!MapperClass.getInstance().ifCustomerExist(customerId)){
                 System.out.println("Customer do not exits. Please enter Customer id again");
             }
 
-        }while (customer == null);
+        }while (!MapperClass.getInstance().ifCustomerExist(customerId));
 
-        String accountNo = generateUniqueAccountID(accountListHashMap.keySet());
+        String accountNo = generateUniqueAccountID(MapperClass.getInstance().getAllAccountNo());
 
         if (accountType.compareTo("Savings") == 0){
 
-            Savings savings = new Savings(accountNo, balance, interest, accountType);
-            HashSet<Customer> c = new HashSet<>();
-            c.add(customer);
-            accountListHashMap.putIfAbsent(savings,c);
+            Savings savings = new Savings(accountNo, balance, interest, accountType, customerId);
 
-
-            HashSet<Account> a = customerListHashMap.get(customer);
-
-            a.add(savings);
-
-            customerListHashMap.put(customer, a);
-
-            System.out.printf("\n************ Savings Account created for %s, Account No: %s ************\n\n", customer.getCustomerId(), accountNo);
+            System.out.printf("\n************ Savings Account created for %s, Account No: %s ************\n\n", customerId, accountNo);
 
             return savings;
 
         }else if(accountType.compareTo("Term Deposit") == 0){
 
-            TermDeposit termDeposit = new TermDeposit(accountNo, balance, interest, term, accountType);
+            TermDeposit termDeposit = new TermDeposit(accountNo, balance, interest, term, accountType, customerId);
 
-            HashSet<Customer> c = new HashSet<>();
-            c.add(customer);
-            accountListHashMap.putIfAbsent(termDeposit,c);
-            HashSet<Account> a = customerListHashMap.get(customer);
-            a.add(termDeposit);
-            customerListHashMap.put(customer, a);
-
-            System.out.printf("\n************ Term Deposit created for %s, Account No: %s for a period of %d years ************\n\n", customer.getCustomerId(), accountNo, term);
+            System.out.printf("\n************ Term Deposit created for %s, Account No: %s for a period of %d years ************\n\n", customerId, accountNo, term);
 
             return termDeposit;
         }
@@ -249,7 +205,7 @@ public class Main {
         Account account = null;
         do{
             System.out.print("Enter account number where you want to deposit: ");
-            account = getAccountObject(sc.nextLine());
+            account = Accounts.getInstance().getAccount(sc.nextLine());
 
             if (account == null){
                 System.out.println("Account do not exits. Please enter valid Account number ");
@@ -276,7 +232,7 @@ public class Main {
         Account account;
         do{
             System.out.print("Enter account number where you want to withdraw from: ");
-            account = getAccountObject(sc.nextLine());
+            account = Accounts.getInstance().getAccount(sc.nextLine());
 
             if (account == null){
                 System.out.println("Account do not exits. Please enter valid Account number ");
@@ -308,150 +264,87 @@ public class Main {
 
     private static void readCustomerDetails(Scanner sc) {
 
-        Customer customer;
+        String customerId;
         do{
             System.out.print("Enter customer id for which you want details: ");
-            customer = getCustomerObject(sc.nextLine());
+            customerId = sc.nextLine();
 
-            if (customer == null){
+            if (!MapperClass.getInstance().ifCustomerExist(customerId)){
                 System.out.println("Customer do not exits. Please enter Customer id again");
             }
 
-        }while (customer == null);
+        }while (!MapperClass.getInstance().ifCustomerExist(customerId));
 
-        System.out.println("\n"+customer);
-        Set<Account> accounts = customerListHashMap.get(customer);
-        for (Account account: accounts){
-            System.out.println(account);
+        System.out.println(Customers.getInstance().getCustomer(customerId));
+        for (String a: MapperClass.getInstance().getAccountList(customerId)){
+            System.out.println(Accounts.getInstance().getAccount(a));
         }
+
     }
 
     private static void readAccountDetails(Scanner sc) {
-        Account account;
+        String accountNo;
         do{
             System.out.print("Enter Account number for which you want details: ");
-            account = getAccountObject(sc.nextLine());
+            accountNo = sc.nextLine();
 
-            if (account == null){
+            if (!MapperClass.getInstance().ifAccountExist(accountNo)){
                 System.out.println("Account do not exits. Please enter Account number again");
             }
 
-        }while (account == null);
+        }while (!MapperClass.getInstance().ifAccountExist(accountNo));
 
-        System.out.println(account);
-        Set<Customer> customers = accountListHashMap.get(account);
-        for (Customer customer: customers){
-            System.out.println(customer);
+        System.out.println(Accounts.getInstance().getAccount(accountNo));
+        for (String a: MapperClass.getInstance().getAllCustomerId()){
+            System.out.println(Customers.getInstance().getCustomer(a));
         }
     }
 
     private static void linkAccountToUser(Scanner sc ) {
 
-        Account account;
-        Customer customer;
+        String accountNo;
+        String customerId;
 
         do{
             System.out.printf("Enter Account Number: ");
-            account = getAccountObject(sc.nextLine());
-            if (account == null) {
+            accountNo = sc.nextLine();
+            if (!MapperClass.getInstance().ifAccountExist(accountNo)) {
                 System.out.println("******* This account does not exists *******");
-                return;
             }
-        }while (account == null);
+        }while (!MapperClass.getInstance().ifAccountExist(accountNo));
 
         do{
             System.out.printf("Enter Customer Id: ");
-            customer = getCustomerObject(sc.nextLine());
+            customerId = sc.nextLine();
 
-            Set<Account> allAccounts = customerListHashMap.get(customer);
-            if (allAccounts.contains(account)){
+            if (!MapperClass.getInstance().ifCustomerExist(customerId)){
+                System.out.println("******* User Does not Exist *******");
+                continue;
+            }
+
+            if (MapperClass.getInstance().getAccountList(customerId).contains(accountNo)){
                 System.out.println("******** User is already linked with that account ********");
                 return;
             }
 
-            if (customer == null) {
+            if (!MapperClass.getInstance().ifCustomerExist(customerId)) {
                 System.out.println("******* User does not exits *******");
-                return;
+                continue;
             }
-        }while (customer == null);
+        }while (!MapperClass.getInstance().ifCustomerExist(customerId));
 
 
-        HashSet<Account> accountList = customerListHashMap.get(customer);
-        accountList.add(account);
-
-        HashSet<Customer> customerList = accountListHashMap.get(account);
-        customerList.add(customer);
+        MapperClass.getInstance().addCustomerToAccountNo(accountNo, customerId);
+        MapperClass.getInstance().addAccountToCustomerId(customerId, accountNo);
 
         System.out.println("\n Account Linked Successfully \n");
 
     }
 
-    private static String generateUniqueCustomerID(Set<Customer> customers) {
-
-        String customerID;
-
-        Random rng = new Random();
-        int len = 6;
-        boolean unique;
-
-        //Loop till we get unique id
-        do{
-            customerID = "";
-            for (int c=0; c<len; c++){
-                customerID += ((Integer) rng.nextInt(10)).toString();
-            }
-
-            unique = false;
-
-            for( Customer u : customers){
-                if (customerID.compareTo(u.getCustomerId()) == 0){
-                    unique = true;
-                    break;
-                }
-            }
-
-        }while (unique);
-
-        return customerID;
-
-    }
-
-    private static String generateUniqueAccountID(Set<Account> accounts) {
-
-        String accountNo;
-
-        Random rng = new Random();
-        int len = 10;
-        boolean unique;
-
-        //Loop till we get unique id
-        do{
-            accountNo = "";
-            for (int c=0; c<len; c++){
-                accountNo += ((Integer) rng.nextInt(10)).toString();
-            }
-
-            unique = false;
-
-            for( Account u : accounts){
-                if (accountNo.compareTo(u.getAccountNo()) == 0){
-                    unique = true;
-                    break;
-                }
-            }
-
-        }while (unique);
-
-        return accountNo;
-
-    }
-
-
-
     private static void addInterest(){
 
-        for(Account a: accountListHashMap.keySet()){
-            a.addInterest();
+        for(String a: MapperClass.getInstance().getAllAccountNo()){
+            Accounts.getInstance().getAccount(a).addInterest();
         }
 
     }
@@ -462,16 +355,21 @@ public class Main {
 
             System.out.print("Enter customer id for which you have to update details: ");
             String customerId = sc.nextLine();
-            customer = getCustomerObject(customerId);
+            customer = Customers.getInstance().getCustomer(customerId);
+
+            if (customer == null){
+                System.out.println("User does not exits");
+            }
+
         }while (customer == null);
         String choice;
         do{
             System.out.println("\nChoose what you have to update\n");
 
             System.out.println("1) Name");
-            System.out.println("2) Email\n");
+            System.out.println("2) Email");
             System.out.println("3) Phone Number");
-            System.out.println("4) Quit");
+            System.out.println("4) Quit\n");
             System.out.print("Enter your choice (1-4): ");
             choice = sc.nextLine();
 
@@ -511,23 +409,34 @@ public class Main {
 
     }
 
-    public static Customer getCustomerObject(String customerId){
+    private static String generateUniqueAccountID(Set<String> accounts) {
 
-        for (Customer customer: customerListHashMap.keySet()){
-            if (customer.getCustomerId().compareTo(customerId) == 0){
-                return customer;
+        String accountNo;
+
+        Random rng = new Random();
+        int len = 10;
+        boolean unique;
+
+        //Loop till we get unique id
+        do{
+            accountNo = "";
+            for (int c=0; c<len; c++){
+                accountNo += ((Integer) rng.nextInt(10)).toString();
             }
-        }
-        return null;
+
+            unique = false;
+
+            for( String a : accounts){
+                if (accountNo.compareTo(a) == 0){
+                    unique = true;
+                    break;
+                }
+            }
+
+        }while (unique);
+
+        return accountNo;
+
     }
 
-    public static Account getAccountObject(String accountNo){
-
-        for (Account account: accountListHashMap.keySet()){
-            if (account.getAccountNo().compareTo(accountNo) == 0){
-                return account;
-            }
-        }
-        return null;
-    }
 }

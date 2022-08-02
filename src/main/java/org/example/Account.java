@@ -13,21 +13,30 @@ abstract class Account {
     private float term;
     private String type;
 
-    public Account(String accountNo, double balance, double interest, String type) {
+    public Account(String accountNo, double balance, double interest, String type, String customerId) {
         this.accountNo = accountNo;
         this.balance = balance;
         this.interest = interest;
         this.timestamp = new Date();
         this.type = type;
+
+        Accounts.getInstance().addAccount(accountNo, this);
+        MapperClass.getInstance().addCustomerToAccountNo(accountNo, customerId);
+        MapperClass.getInstance().addAccountToCustomerId(customerId, accountNo);
+
     }
 
-    public Account(String accountNo, double balance, double interest,String type, float term) {
+    public Account(String accountNo, double balance, double interest,String type, float term, String customerId) {
         this.accountNo = accountNo;
         this.balance = balance;
         this.interest = interest;
         this.timestamp = new Date();
         this.term = term;
         this.type = type;
+
+        Accounts.getInstance().addAccount(accountNo, this);
+        MapperClass.getInstance().addCustomerToAccountNo(accountNo, customerId);
+        MapperClass.getInstance().addAccountToCustomerId(customerId, accountNo);
     }
 
     public String getAccountNo() {
@@ -71,12 +80,12 @@ abstract class Account {
     }
 
     public void addInterest() {
-        long duration = this.timestamp.getTime() - new Date().getTime();
+        long duration =  new Date().getTime() - this.timestamp.getTime();
         long diffInDays = TimeUnit.MILLISECONDS.toDays(duration);
-        if (diffInDays < 365){
+        if (diffInDays > 365){
             double curBalance = this.balance;
             this.balance += curBalance * interest;
-            System.out.println("Account type "+this.type+" Current Balance " + curBalance + " Interest "+interest+" Updated balance of Account No "+ this.accountNo+ " is ₹"+ this.balance);
+            System.out.printf("Account type %s, Current Balance %.02f, Interest %.01f%%, Updated balance of Account No %s is ₹%.02f", this.type, curBalance, interest*100, this.accountNo,this.balance);
         }else {
             System.out.println("Cannot add interest");
         }
